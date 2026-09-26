@@ -119,6 +119,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All work");
   const [socialOffset, setSocialOffset] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 36);
@@ -134,12 +135,31 @@ export default function Home() {
     return () => window.clearInterval(interval);
   }, []);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    toast.success("Inquiry received", {
-      description: "We’ll be in touch within 2–3 studio days.",
-    });
-    event.currentTarget.reset();
+    const form = event.currentTarget;
+    setSubmitting(true);
+
+    try {
+      const response = await fetch("https://formspree.io/f/xjykorpe", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: new FormData(form),
+      });
+
+      if (!response.ok) throw new Error("Form submission failed");
+
+      toast.success("Inquiry received", {
+        description: "Thanks — we’ll be in touch within 2–3 studio days.",
+      });
+      form.reset();
+    } catch {
+      toast.error("Something went wrong", {
+        description: "Please try again or email support@miraveystudio.com directly.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -409,11 +429,19 @@ export default function Home() {
           <div>
             <p className="eyebrow text-[#fffaf2]/60">Appointments</p>
             <h2 className="mt-4 max-w-lg font-display text-5xl leading-[0.88] tracking-[-0.065em] sm:text-7xl">Turn your idea into ink.</h2>
-            <p className="mt-8 max-w-md text-[15px] leading-7 text-[#fffaf2]/78">Custom tattoos made to stand out. Send a DM to start your appointment and tell us about the idea you’re carrying.</p>
+            <p className="mt-8 max-w-md text-[15px] leading-7 text-[#fffaf2]/78">Custom tattoos made to stand out. Send a DM or email to start your appointment and tell us about the idea you’re carrying.</p>
+            <div className="mt-8 border-l border-[#fffaf2]/45 pl-4 text-sm leading-6 text-[#fffaf2]/78">
+              <p className="font-semibold text-[#fffaf2]">Los Angeles, California</p>
+              <p>Mobile studio — once your appointment is booked, we can travel anywhere.</p>
+              <div className="mt-2 flex flex-col gap-1">
+                <a href="mailto:support@miraveystudio.com" className="inline-block underline decoration-[#fffaf2]/40 underline-offset-4 transition-colors hover:text-[#fffaf2]">support@miraveystudio.com</a>
+                <a href="tel:+12133340333" className="inline-block underline decoration-[#fffaf2]/40 underline-offset-4 transition-colors hover:text-[#fffaf2]">+1 (213) 334-0333</a>
+              </div>
+            </div>
             <div className="mt-12 space-y-3 text-sm text-[#fffaf2]/78">
               <p className="flex items-center gap-3"><Check size={15} /> Tattoos from $200</p>
               <p className="flex items-center gap-3"><Check size={15} /> 50% deposit required to secure booking</p>
-              <p className="flex items-center gap-3"><Check size={15} /> DM to book your session</p>
+              <p className="flex items-center gap-3"><Check size={15} /> DM or email to book your session</p>
             </div>
           </div>
           <form onSubmit={handleSubmit} className="grid content-start gap-7">
@@ -421,10 +449,14 @@ export default function Home() {
               <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.15em] text-[#fffaf2]/65">Your name</span>
               <input required name="name" placeholder="What should we call you?" className="w-full bg-transparent text-lg outline-none placeholder:text-[#fffaf2]/45" />
             </label>
-            <div className="grid gap-7 sm:grid-cols-2">
+            <div className="grid gap-7 sm:grid-cols-3">
               <label className="block border-b border-[#fffaf2]/40 pb-3">
                 <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.15em] text-[#fffaf2]/65">Email</span>
                 <input required type="email" name="email" placeholder="hello@example.com" className="w-full bg-transparent text-lg outline-none placeholder:text-[#fffaf2]/45" />
+              </label>
+              <label className="block border-b border-[#fffaf2]/40 pb-3">
+                <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.15em] text-[#fffaf2]/65">Phone</span>
+                <input type="tel" name="phone" placeholder="(213) 555-0123" className="w-full bg-transparent text-lg outline-none placeholder:text-[#fffaf2]/45" />
               </label>
               <label className="block border-b border-[#fffaf2]/40 pb-3">
                 <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.15em] text-[#fffaf2]/65">Placement</span>
@@ -435,8 +467,8 @@ export default function Home() {
               <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.15em] text-[#fffaf2]/65">Tell us about the piece</span>
               <textarea required name="idea" rows={3} placeholder="The feeling, references, scale..." className="w-full resize-none bg-transparent text-lg outline-none placeholder:text-[#fffaf2]/45" />
             </label>
-            <button type="submit" className="group mt-2 flex w-fit items-center gap-4 rounded-full bg-[#fffaf2] px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#151515] transition-transform duration-200 hover:-translate-y-0.5">
-              Send inquiry <span className="grid h-7 w-7 place-items-center rounded-full bg-[#151515] text-[#fffaf2] transition-transform group-hover:translate-x-1"><ChevronRight size={15} /></span>
+            <button type="submit" disabled={submitting} className="group mt-2 flex w-fit items-center gap-4 rounded-full bg-[#fffaf2] px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#151515] transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60">
+              {submitting ? "Sending…" : "Send inquiry"} <span className="grid h-7 w-7 place-items-center rounded-full bg-[#151515] text-[#fffaf2] transition-transform group-hover:translate-x-1"><ChevronRight size={15} /></span>
             </button>
           </form>
         </div>
@@ -447,15 +479,20 @@ export default function Home() {
           <div className="flex flex-col justify-between gap-12 border-b border-white/15 pb-12 sm:flex-row sm:items-end">
             <div>
               <span className="font-display text-5xl tracking-[-0.1em] sm:text-6xl">miraveystudio</span>
-              <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">Private tattoo practice for considered marks and singular stories.</p>
+              <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">Private mobile tattoo practice based in Los Angeles, California. Travel available anywhere after booking.</p>
             </div>
-            <a href="mailto:hello@miraveystudio.com" className="group inline-flex items-center gap-4 text-lg transition-colors hover:text-[#d8d1c3]">
-              hello@miraveystudio.com <ArrowUpRight className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" size={19} />
-            </a>
+            <div className="flex flex-col items-start gap-3 text-lg sm:items-end">
+              <a href="mailto:support@miraveystudio.com" className="group inline-flex items-center gap-4 transition-colors hover:text-[#d8d1c3]">
+                support@miraveystudio.com <ArrowUpRight className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" size={19} />
+              </a>
+              <a href="tel:+12133340333" className="inline-flex items-center gap-3 text-base transition-colors hover:text-[#d8d1c3]">
+                +1 (213) 334-0333 <ArrowUpRight size={17} />
+              </a>
+            </div>
           </div>
           <div className="flex flex-col gap-4 py-6 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45 sm:flex-row sm:items-center sm:justify-between">
             <span>© 2026 miraveystudio</span>
-            <div className="flex gap-5"><a href="#top" className="hover:text-white">Instagram</a><a href="#booking" className="hover:text-white">Appointments</a><a href="#top" className="hover:text-white">Back to top</a></div>
+            <div className="flex gap-5"><a href="https://www.instagram.com/miraveystudio/" target="_blank" rel="noreferrer" className="hover:text-white">Instagram</a><a href="https://www.tiktok.com/@miraveystudio" target="_blank" rel="noreferrer" className="hover:text-white">TikTok</a><a href="#booking" className="hover:text-white">Appointments</a><a href="#top" className="hover:text-white">Back to top</a></div>
           </div>
         </div>
       </footer>
